@@ -1,0 +1,7 @@
+{
+    "files": [
+        "banana_dispenser.py",
+        "App/Main.ui.qml",
+        "App/qmldir"
+    ]
+}
