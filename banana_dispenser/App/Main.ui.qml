@@ -49,6 +49,12 @@ Page {
             }
         }
 
+        //end scan
+
+        SettingsPage {
+            id: settingsPg
+        }
+
         NumberAnimation {
             id: anim
 

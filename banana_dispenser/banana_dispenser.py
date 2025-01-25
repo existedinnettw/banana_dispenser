@@ -6,6 +6,8 @@ from PySide6.QtQuick import QQuickView
 from PySide6.QtCore import QStringListModel
 from PySide6.QtGui import QGuiApplication
 
+from .util import Util
+
 
 def program():
     # get our data
@@ -19,6 +21,8 @@ def program():
 
     # Set up the application window
     app = QGuiApplication(sys.argv)
+    app.setOrganizationName("banana_dispenser")
+    # app.setOrganizationDomain()
     # QQmlApplicationEngine
     view = QQuickView()
     view.setResizeMode(QQuickView.SizeRootObjectToView)
@@ -27,6 +31,10 @@ def program():
     my_model = QStringListModel()
     my_model.setStringList(data_list)
     view.setInitialProperties({"myModel": my_model})
+
+    # inject python object to qml
+    util = Util()
+    view.engine().rootContext().setContextProperty("Util", util)
 
     # Load the QML file
     # Dynamically add the import path
