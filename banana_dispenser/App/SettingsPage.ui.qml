@@ -26,51 +26,14 @@ Item {
     Column {
         anchors.centerIn: parent
         anchors.fill: parent
+
         anchors.margins: 30
         spacing: 10
 
-        Row {
-            spacing: 10
-
-            Label {
-
-                // verticalAlignment: Text.AlignVCenter
-                // font.pixelSize:
-
-                text: "People list path:"
-                anchors.verticalCenter: parent.verticalCenter
-            }
-
-            TextField {
-                id: urlField
-
-                width: 500
-                height: 40
-                placeholderText: "file:///home/${USER}/banana_dispenser/samples/people_list.sample.csv"
-                text: settings.people_list_url //init value only
-                onEditingFinished: {
-                    if (!Util.if_file_uri_existed(urlField.text)) {
-                        //if uri not existed
-                        urlField.undo();
-                        if (!Util.if_file_uri_existed(urlField.text)) {
-                            //ori file not exist too
-                            urlField.text = StandardPaths.writableLocation(StandardPaths.DocumentsLocation) + "/people_list.csv";
-                        }
-                    }
-                    // else, success setting
-                }
-            }
-            Button {
-                text: qsTr("Select people list")
-                onClicked: {
-                    fileDialog.selectedFile = urlField.text;
-                    if (fileDialog.visible == false)
-                        fileDialog.open();
-                }
-            }
+        MemFileSel {
+            id: peopleListPath
+            settings: settings
         }
-
-        //end of Row
 
         Row {
             spacing: 10
@@ -156,19 +119,4 @@ Item {
         }
     }
     //end of column
-    FileDialog {
-        id: fileDialog
-
-        title: qsTr("Select a people list")
-        nameFilters: ["CSV file (*.csv)"]
-        onAccepted: {
-            urlField.text = selectedFile;
-            console.log("selected people list url:", urlField.text);
-        }
-        onRejected: {
-            // Handle cancellation
-            console.log("on reject called");
-        }
-        visible: false
-    }
 }

@@ -22,10 +22,12 @@ Page {
             width: parent.width
             height: parent.height
 
+            color: "transparent"
+
             Image {
                 id: image
-                width: 666
-                height: 594
+                width: 0.9 * parent.width
+                height: 0.9 * parent.height
 
                 fillMode: Image.PreserveAspectFit
                 anchors.centerIn: root

@@ -1,5 +1,7 @@
 {
     "recommendations": [
-        "delgan.qml-format"
+        "delgan.qml-format",
+        "theqtcompany.qt-qml",
+        "ms-python.black-formatter"
     ]
 }

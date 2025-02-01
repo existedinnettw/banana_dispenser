@@ -2,6 +2,8 @@
     "files": [
         "banana_dispenser.py",
         "App/Main.ui.qml",
+        "App/SettingsPage.ui.qml",
+        "App/MemFileSel.ui.qml",
         "App/qmldir"
     ]
 }
