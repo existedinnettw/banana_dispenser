@@ -6,64 +6,31 @@ import QtQuick.Layouts
 import QtQuick.Controls.Material
 
 Page {
-    required property var myModel
 
     width: 960
     height: 720
 
-    StackLayout {
+    SwipeView {
+        id: swipeView
+
         width: parent.width
         height: parent.height
         currentIndex: tabBar.currentIndex
 
-        Rectangle {
-            id: root
-
-            width: parent.width
-            height: parent.height
-
-            color: "transparent"
-
-            Image {
-                id: image
-                width: 0.9 * parent.width
-                height: 0.9 * parent.height
-
-                fillMode: Image.PreserveAspectFit
-                anchors.centerIn: root
-                source: "./logo.png"
-                opacity: 0.5
-            }
-
-            ListView {
-                id: view
-
-                anchors.fill: root
-                anchors.margins: 25
-                model: myModel
-
-                delegate: Text {
-                    anchors.leftMargin: 50
-                    font.pointSize: 15
-                    horizontalAlignment: Text.AlignHCenter
-                    text: display
-                }
-            }
+        ScanPage {
+            id: scanPg
         }
-
-        //end scan
 
         SettingsPage {
             id: settingsPg
         }
 
-        NumberAnimation {
-            id: anim
-
-            running: true
-            target: view
-            property: "contentY"
-            duration: 500
+        // Ensures the focus changes to your page whenever you show a different page
+        onCurrentItemChanged: {
+            currentItem.forceActiveFocus();
+        }
+        Component.onCompleted: {
+            currentItem.forceActiveFocus();
         }
     }
 
@@ -85,16 +52,22 @@ Page {
     footer: TabBar {
         id: tabBar
 
-        currentIndex: 0
+        currentIndex: swipeView.currentIndex
 
         TabButton {
             text: qsTr("Scan")
-            onClicked: console.log("Auto button clicked")
+            onClicked: {
+                tabBar.setCurrentIndex(0);
+                console.log("Auto button clicked");
+            }
         }
 
         TabButton {
             text: qsTr("Setting")
-            onClicked: console.log("Setting button clicked")
+            onClicked: {
+                tabBar.setCurrentIndex(1);
+                console.log("Setting button clicked");
+            }
         }
     }
     //end of footer

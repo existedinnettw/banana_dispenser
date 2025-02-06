@@ -10,14 +10,6 @@ from .util import Util
 
 
 def program():
-    # get our data
-    url = "http://country.io/names.json"
-    response = urllib.request.urlopen(url)
-    data = json.loads(response.read().decode("utf-8"))
-
-    # Format and sort the data
-    data_list = list(data.values())
-    data_list.sort()
 
     # Set up the application window
     app = QGuiApplication(sys.argv)
@@ -26,11 +18,6 @@ def program():
     # QQmlApplicationEngine
     view = QQuickView()
     view.setResizeMode(QQuickView.SizeRootObjectToView)
-
-    # Expose the list to the Qml code
-    my_model = QStringListModel()
-    my_model.setStringList(data_list)
-    view.setInitialProperties({"myModel": my_model})
 
     # inject python object to qml
     util = Util()
