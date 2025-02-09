@@ -1,3 +1,6 @@
 module App
-Main 1.0 Main.ui.qml
-# Page.ui.qml
+Main 1.0 Main.qml
+# module Pages 
+ScanPage 1.0 Pages/ScanPage.qml
+SettingsPage 1.0 Pages/SettingsPage.qml
+# MemFileSel 1.0 MemFileSel.qml

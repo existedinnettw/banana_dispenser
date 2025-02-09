@@ -1,4 +1,5 @@
 from PySide6.QtCore import QObject, Signal, Slot
+from PySide6.QtQml import QmlElement, QmlSingleton
 from pathlib import Path
 import os
 import subprocess
@@ -30,7 +31,13 @@ def get_path_from_file_uri(uri: str) -> Path:
     return path_obj
 
 
-# slot func should always in class. therefore, to connect to qml, all thing should be in class
+# register type to QML
+QML_IMPORT_NAME = "Util"
+QML_IMPORT_MAJOR_VERSION = 1
+
+
+@QmlElement
+@QmlSingleton
 class Util(QObject):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -50,7 +57,10 @@ class Util(QObject):
         return False
 
     @Slot(str, result=None)
-    def open_file_with_default_application(self, file_path: str) -> None:
+    @staticmethod
+    def open_file_with_default_application(file_path: str) -> None:
+        # slot func should always in class. therefore, to connect to qml, all
+        # thing should be in class
         if platform.system() == "Darwin":  # macOS
             subprocess.call(("open", file_path))
         elif platform.system() == "Windows":  # Windows

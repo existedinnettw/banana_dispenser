@@ -4,9 +4,9 @@ import urllib.request
 import json
 from PySide6.QtQuick import QQuickView
 from PySide6.QtCore import QStringListModel
-from PySide6.QtGui import QGuiApplication
-
-from .util import Util
+from PySide6.QtGui import QGuiApplication, QIcon
+from . import util, store  # noqa: F401
+from . import rc_banana_dispenser  # noqa: F401
 
 
 def program():
@@ -14,14 +14,11 @@ def program():
     # Set up the application window
     app = QGuiApplication(sys.argv)
     app.setOrganizationName("banana_dispenser")
+    app.setWindowIcon(QIcon("qrc:/qt/qml/App/assets/banana.png"))
     # app.setOrganizationDomain()
     # QQmlApplicationEngine
     view = QQuickView()
     view.setResizeMode(QQuickView.SizeRootObjectToView)
-
-    # inject python object to qml
-    util = Util()
-    view.engine().rootContext().setContextProperty("Util", util)
 
     # Load the QML file
     # Dynamically add the import path

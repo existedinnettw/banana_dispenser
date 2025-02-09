@@ -20,7 +20,7 @@ Page {
 
             fillMode: Image.PreserveAspectFit
             anchors.centerIn: root
-            source: "./logo.png"
+            source: "qrc:/qt/qml/App/assets/banana.png"
             opacity: 0.5
 
             // NumberAnimation on opacity  {
@@ -66,7 +66,10 @@ Page {
                 // onClicked: popup.open()
             }
 
-            // may add tableview to display pd.Dataframe
+            // tableView to display pd.Dataframe
+            // may add `collect on behalf of` button for orders which is not pick up
+            // sort by pick up time, and focus on not pickup yet orders.
+            // search row feature
         }// end of column
     }
 }

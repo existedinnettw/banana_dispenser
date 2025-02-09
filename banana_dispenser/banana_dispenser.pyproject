@@ -1,9 +1,11 @@
 {
     "files": [
         "banana_dispenser.py",
-        "App/Main.ui.qml",
-        "App/SettingsPage.ui.qml",
-        "App/MemFileSel.ui.qml",
+        "banana_dispenser.qrc"
+        "App/Main.qml",
+        "App/Pages/ScanPage.qml",
+        "App/Pages/SettingsPage.qml",
+        "App/Pages/MemFileSel.qml",
         "App/qmldir"
     ]
 }
