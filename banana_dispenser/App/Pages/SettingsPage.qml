@@ -4,6 +4,7 @@ import QtQuick.Controls
 import QtQuick.Controls.Material
 import QtQuick.Dialogs
 import QtQuick.Layouts
+import Store //OrderMngr
 
 Page {
     property alias settings: settings
@@ -14,13 +15,16 @@ Page {
         id: settings
 
         //RFC 1738
-        property url people_list_url: peopleListPath.settingsUrl
-        property url objects_list_url: objectsListPath.settingsUrl
-    }
+        property url peopleListUrl: peopleListPath.settingsUrl
+        property url objectsListUrl: objectsListPath.settingsUrl
 
-    // Component.onDestruction: function () {
-    //     settings.people_list_url = peopleListPath.urlField;
-    // }
+        onPeopleListUrlChanged: {
+            OrderMngr.peopleListPath = peopleListUrl;
+        }
+        onObjectsListUrlChanged: {
+            OrderMngr.objectListPath = objectsListUrl;
+        }
+    }
 
     Column {
         anchors.centerIn: parent
@@ -31,12 +35,12 @@ Page {
 
         MemFileSel {
             id: peopleListPath
-            settingsUrl: settings.people_list_url
+            settingsUrl: settings.peopleListUrl
             memFiledName: "People list path"
         }
         MemFileSel {
             id: objectsListPath
-            settingsUrl: settings.objects_list_url
+            settingsUrl: settings.objectsListUrl
             memFiledName: "Object list path"
         }
     }

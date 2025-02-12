@@ -59,7 +59,7 @@ Item {
             anchors.verticalCenter: parent.verticalCenter
             text: (memFileSel.settingsUrl.toString().length === 0) ? "❌" : "✔"
             color: (memFileSel.settingsUrl.toString().length === 0) ? "red" : "green"
-            font.pixelSize: 22
+            font.pointSize: 22
         }
 
         Button {
@@ -67,12 +67,13 @@ Item {
             onClicked: {
                 Util.open_file_with_default_application(urlField.text);
             }
+            enabled: (memFileSel.settingsUrl.toString().length === 0) ? false : true
         }
 
         Button {
             text: qsTr("Select file")
             onClicked: {
-                fileDialog.selectedFile = urlField.text;
+                fileDialog.selectedFile = (memFileSel.settingsUrl.toString().length === 0) ? Qt.resolvedUrl(".") : memFileSel.settingsUrl;
                 if (!fileDialog.visible) {
                     fileDialog.open();
                 }

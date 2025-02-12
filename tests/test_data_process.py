@@ -1,23 +1,15 @@
 import pytest
 
-from banana_dispenser.data_process import check_id_as_index
+from banana_dispenser.data_process import open_list_file, combine_to_orders_table
 import pandas as pd
+from expression import Some
 
 
-def test_check_order():
-    # people_df = pd.read_csv("tests/data/people_list.sample.csv", skipinitialspace=True)
+def test_get_orders_tabls():
+    people_df_op = Some("tests/data/people_list.sample.csv").pipe(open_list_file)
+    objects_df_op = Some("tests/data/objects.sample.csv").pipe(open_list_file)
+    orders_df_op = combine_to_orders_table(people_df_op, objects_df_op)
+    print(orders_df_op.value)
 
-    people_df = check_id_as_index(pd.read_excel("tests/data/people_list.sample.xlsx"))
 
-    objects_df = check_id_as_index(
-        pd.read_csv("tests/data/objects.sample.csv", skipinitialspace=True)
-    )
-
-    combined_df = objects_df.merge(
-        people_df,
-        how="inner",
-        left_on="people_id",
-        right_on="id",
-        suffixes=(None, "_DROP"),
-    ).filter(regex="^(?!.*DROP)")
-    print(combined_df)
+# def test()
