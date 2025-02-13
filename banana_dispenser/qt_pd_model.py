@@ -34,14 +34,26 @@ class TableModel(QtCore.QAbstractTableModel):
         if role == Qt.DisplayRole:
             if orientation == Qt.Horizontal:
                 # print(self.df_data.columns[section])
-                return str(self.df_data.columns[section])
+                return str(self.df_data.columns[section]).replace("_", " ")
 
             if orientation == Qt.Vertical:
                 return str(self.df_data.index[section])
 
     def setData(self, index, value, role=Qt.ItemDataRole.EditRole):
+        """
+        Returns true if successful; otherwise returns false.
+        The dataChanged() signal should be emitted if the data was successfully set.
+
+        """
         print("setData called")
-        return False
+        row = index.row()
+        col = index.column()
+
+        print(index)
+        print(row, col)
+        self.dataChanged.emit(index, index)
+
+        return True
 
     def flags(self, index):
         """Set the item flags at the given index. Seems like we're

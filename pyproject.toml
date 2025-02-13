@@ -11,12 +11,13 @@ python = ">=3.10,<3.14"
 pyside6 = "^6.8.1"
 pandas = "^2.2.3"
 openpyxl = "^3.1.5"
-expression = {extras = ["pydantic"], version = "^5.5.0"}
+expression = { extras = ["pydantic"], version = "^5.5.0" }
 
 [tool.poetry.group.dev.dependencies]
 black = "^24.4.2"
 flake8 = "^7.1.0"
 pytest = "^8.3.3"
+flake8-pyproject = "^1.2.3"
 
 [build-system]
 requires = ["poetry-core"]
@@ -25,6 +26,11 @@ build-backend = "poetry.core.masonry.api"
 [tool.black]
 line-length = 88
 include = '\.pyi?$'
+
+[tool.flake8]
+# by flake8-pyproject
+max-line-length = 88
+max-complexity = 10
 
 [tool.poetry.scripts]
 program = "banana_dispenser.banana_dispenser:program"

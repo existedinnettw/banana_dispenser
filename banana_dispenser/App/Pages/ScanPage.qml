@@ -34,7 +34,7 @@ Page {
         }
 
         Column {
-        // ColumnLayout{
+            // ColumnLayout{
             anchors.centerIn: parent
             anchors.fill: parent
 
@@ -60,6 +60,16 @@ Page {
                 // https://stackoverflow.com/a/76117389
                 // onFocusChanged: if (!focus)
                 //     Qt.callLater(forceActiveFocus)
+                onEditingFinished: {
+
+                    // summit to store
+                    if (!rfidTextField.text) {
+                        return;
+                    }
+                    console.log("poeple id: ", rfidTextField.text);
+                    OrderMngr.object_pick_up(parseInt(rfidTextField.text));
+                    rfidTextField.clear();
+                }
             }
 
             Button {
@@ -78,7 +88,8 @@ Page {
                 width: 0.8 * parent.width
                 // height: 0.8 * parent.height
                 // height: 100
-                height: parent.height- y
+                height: parent.height - y
+
                 // Layout.fillHeight: true //fill rest of Column
 
                 anchors.horizontalCenter: parent.horizontalCenter
@@ -95,14 +106,16 @@ Page {
 
                     // QML table view not correctly impl `headerData` yet
                     // model: ["name","color"] //modelData ver
-                                        
+
                     delegate: Rectangle {
-                        implicitWidth: 150
+                        // implicitWidth: 100
+                        implicitWidth: Math.max(columnText.implicitWidth + 18, 100)
                         implicitHeight: 30
-                        opacity:0.8
+                        opacity: 0.8
                         color: "gray"
 
                         Text {
+                            id: columnText
                             text: model.display
                             font.pointSize: 14
 
@@ -124,10 +137,10 @@ Page {
                 //     clip: true
                 // }
                 TableView {
-                    id : ordersTableView
+                    id: ordersTableView
                     // anchors.fill: parent
-                    anchors.top : horizontalHeader.bottom
-                    anchors.topMargin : 6
+                    anchors.top: horizontalHeader.bottom
+                    anchors.topMargin: 6
                     width: parent.width
                     height: parent.height
 
@@ -135,7 +148,7 @@ Page {
 
                     columnSpacing: 3
                     rowSpacing: 3
-                    
+
                     clip: true
 
                     // model: ordersTableFrame.exampleModel
@@ -148,20 +161,20 @@ Page {
 
                     //each cell
                     delegate: Rectangle {
-                        // implicitWidth: 150
+                        // implicitWidth: 100
                         // implicitWidth: TableView.view.width
-                        implicitWidth: Math.max(cellText.implicitWidth+18, 150)
+                        implicitWidth: Math.max(cellText.implicitWidth + 18, 100)
                         implicitHeight: 50
                         // implicitHeight: Math.max(cellText.implicitHeight)
-                        opacity:0.8
-                        anchors.margins:2
+                        opacity: 0.8
+                        anchors.margins: 2
 
                         Text {
                             id: cellText
                             text: display
                             anchors.centerIn: parent
                         }
-                        
+
                         //edit cell
                         TableView.editDelegate: TextField {
                             anchors.fill: parent
@@ -172,7 +185,7 @@ Page {
                             Component.onCompleted: selectAll()
 
                             TableView.onCommit: {
-                                display = text
+                                display = text;
                                 // 'display = text' is short-hand for:
                                 // let index = TableView.view.index(row, column)
                                 // TableView.view.model.setData(index, "display", text)

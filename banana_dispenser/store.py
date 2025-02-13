@@ -8,6 +8,8 @@ from . import data_process as dp
 from expression import Some
 from . import qt_pd_model
 import pandas as pd
+import numpy as np
+from datetime import datetime
 
 # import copy
 
@@ -62,13 +64,15 @@ class OrderMngr(QObject):
         if url == self._people_list_path:
             return
 
-        people_df_op = Some(url.toString()).pipe(dp.open_list_file)
-        # objects_df_op = Some(sel).pipe(open_list_file)
-        if people_df_op.is_none():
-            return
+        people_df_op = Some(url.toString()).pipe(
+            dp.open_list_file, dp.people_df_validator
+        )
         self._people_list_path = url
+
+        if people_df_op.is_none():
+            self.ordersTableModel = qt_pd_model.TableModel(self._default_orders_table)
+            return
         self._people_df = people_df_op.value
-        self.peopleListPathChanged.emit()
         print("people df update")
 
         orders_df_op = dp.combine_to_orders_table(people_df_op, Some(self._objects_df))
@@ -86,17 +90,19 @@ class OrderMngr(QObject):
         return self._objects_list_path
 
     @objectListPath.setter
-    def objectListPath(self, url: QUrl):
+    def objectListPath(self, url: QUrl) -> None:
         if url == self._objects_list_path:
             return
-
-        # people_df_op = Some(self._people_list_path.toString()).pipe(dp.open_list_file)
-        objects_df_op = Some(url.toString()).pipe(dp.open_list_file)
-        if objects_df_op.is_none():
-            return
         self._objects_list_path = url
+
+        # TODO better validator
+        objects_df_op = Some(url.toString()).pipe(
+            dp.open_list_file, dp.objects_df_validator
+        )
+        if objects_df_op.is_none():
+            self.ordersTableModel = qt_pd_model.TableModel(self._default_orders_table)
+            return
         self._objects_df = objects_df_op.value
-        self.objectListPathChanged.emit()
         print("object df update")
 
         orders_df_op = dp.combine_to_orders_table(Some(self._people_df), objects_df_op)
@@ -125,27 +131,59 @@ class OrderMngr(QObject):
 
         # aware object my be shallow copy
         self._orders_table_model.df_data = table_model.df_data
-        # self.ordersTableModelChanged.emit(self._orders_table_model)
         self._orders_table_model.modelReset.emit()  # model have its own special signal
         # self._orders_table_model = copy.copy(table_model) #no reducer
         print("ordersTableModel update.")
 
     # no setter need
 
-    # @Slot(int, result=bool)
-    # def object_pick_up(self, object_id: int) -> bool:
-    #     """
-    #     write pick_up time to specific record of underline file
+    @Slot(int, result=bool)
+    def object_pick_up(self, people_id: int) -> bool:
+        """
+        write pick_up time to specific record of underline file
 
-    #     Returns
-    #     -------
-    #     success or fail
-    #     """
-    #     # open file
-    #     # find specific line of file
-    #     # update value in file
+        Returns
+        -------
+        success or fail
+        """
+        # find if object_id exist in df
+        if people_id is None:
+            return
 
-    #     return True
+        orders_df = self._orders_table_model.df_data
+        selected_rows = orders_df[orders_df["people_id"] == people_id]
+        if selected_rows.empty:
+            print("[DEBUG]: person doesn't order any object.")
+            return False
+
+        # update value in df
+        for row_idx, row in selected_rows.iterrows():
+            row: pd.Series
+
+            print(row["pickup_datetime"], type(row["pickup_datetime"]))
+            if not row["pickup_datetime"] is pd.NaT:
+                print("[DEBUG]: person already pick up.")
+                break
+            now_time_pd_ts = pd.Timestamp(
+                datetime.today().replace(microsecond=0), tz="UTC"
+            )
+            orders_df.loc[orders_df.index == row_idx, "pickup_datetime"] = (
+                now_time_pd_ts
+            )
+            # tz is forced to be compatible in type
+            print(row_idx, "\n", row, "\n")
+
+            # TODO how to show info on view
+            column_idx = orders_df.columns.get_loc("pickup_datetime")
+
+            self._orders_table_model.setData(
+                index=self._orders_table_model.index(row_idx, column_idx),
+                value=now_time_pd_ts,
+            )
+        print("[DEBUG] {} pick up object".format(selected_rows.head(1)["name"]))
+        # print(orders_df)
+
+        return True
 
     # # on app exit, export and save csv/excel config file
     # @Slot()
