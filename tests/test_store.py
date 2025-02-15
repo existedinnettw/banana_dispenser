@@ -12,18 +12,21 @@ from banana_dispenser import qt_pd_model
 
 @pytest.fixture
 def sample_people_data():
-    return pd.DataFrame({"id": [1, 2, 3], "name": ["Alice", "Bob", "Charlie"]})
+    return pd.DataFrame(
+        {"id": [21, 1, 23], "name": ["Alice", "Bob", "Charlie"]}
+    ).set_index("id")
 
 
 @pytest.fixture
 def sample_objects_data():
     return pd.DataFrame(
         {
+            "id": [6, 8, 11],
             "object": ["banana", "apple", "orange"],
-            "people_id": [1, 2, 3],
+            "people_id": [1, 22, 23],
             "pickup_datetime": [pd.NaT, pd.NaT, pd.NaT],
-        }
-    )
+        },
+    ).set_index("id")
 
 
 @pytest.fixture
@@ -32,8 +35,8 @@ def temp_csv_files(sample_people_data, sample_objects_data):
         people_path = Path(temp_dir) / "people.csv"
         objects_path = Path(temp_dir) / "objects.csv"
 
-        sample_people_data.to_csv(people_path, index=False)
-        sample_objects_data.to_csv(objects_path, index=False)
+        sample_people_data.to_csv(people_path, index=True)
+        sample_objects_data.to_csv(objects_path, index=True)
 
         yield str(people_path), str(objects_path)
 

@@ -1,4 +1,7 @@
 <RCC>
+    <qresource prefix="/">
+        <file>qtquickcontrols2.conf</file>
+    </qresource>
     <qresource prefix="/qt/qml/App">
         <file>assets/banana.png</file>
     </qresource>

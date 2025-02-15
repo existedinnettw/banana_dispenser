@@ -3,6 +3,9 @@ from PySide6 import QtCore  # ,QtGui, QtWidgets
 from PySide6.QtCore import Qt
 
 import pandas as pd
+import builtins
+from typing import Type
+from datetime import datetime
 
 
 class TableModel(QtCore.QAbstractTableModel):
@@ -15,13 +18,21 @@ class TableModel(QtCore.QAbstractTableModel):
     def data(self, index, role):
         match role:
             # https://doc.qt.io/qt-6/qabstractitemmodel.html#roleNames
-            case Qt.DisplayRole | Qt.EditRole:
-                value = self.df_data.iloc[index.row(), index.column()]
-                return str(value)
-            # case Qt.EditRole:
+            # case Qt.DisplayRole | Qt.EditRole:
+
             case _:
+                # print("data: ", "row: ", index.row(), "col: ", index.column())
                 value = self.df_data.iloc[index.row(), index.column()]
-                return str(value)
+                match type(value):
+                    case pd.Timestamp:
+                        return (
+                            value.to_pydatetime()
+                            .astimezone()
+                            .replace(tzinfo=None)
+                            .isoformat()
+                        )
+                    case _:
+                        return str(value)
 
     def rowCount(self, index):
         return self.df_data.shape[0]
@@ -45,12 +56,12 @@ class TableModel(QtCore.QAbstractTableModel):
         The dataChanged() signal should be emitted if the data was successfully set.
 
         """
-        print("setData called")
-        row = index.row()
-        col = index.column()
+        # row = index.row()
+        # col = index.column()
+        # print("[DEBUG] setData called")
+        # print("row: ", row, ", col: ", col)
+        # print(self.df_data)
 
-        print(index)
-        print(row, col)
         self.dataChanged.emit(index, index)
 
         return True

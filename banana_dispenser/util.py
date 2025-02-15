@@ -67,3 +67,14 @@ class Util(QObject):
             os.startfile(file_path)
         else:  # Linux variants
             subprocess.call(("xdg-open", file_path))
+
+
+# class :
+
+
+# TODO people_list_validator
+class PeopleListValidator(QObject):
+    pass
+
+
+# TODO object_list_validator

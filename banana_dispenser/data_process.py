@@ -1,6 +1,9 @@
 import pandas as pd
 from expression import Ok, Error, Result, pipe, Option
 import pathlib
+from datetime import datetime
+import os
+from pathlib import Path
 
 
 def open_list_file(file_path_op: Option[str]) -> Result[pd.DataFrame, str]:
@@ -77,12 +80,14 @@ def objects_df_validator(
             if not all(column in objects_df.columns for column in required_columns):
                 return Error("Missing required columns in objects DataFrame")
             try:
+                # utc for datetime64[ns, UTC]
+                objects_df["pickup_datetime"] = pd.to_datetime(
+                    objects_df["pickup_datetime"], format="mixed", utc=True
+                )
                 objects_df = objects_df.astype(
                     {"object": str, "people_id": pd.Int64Dtype()}
                 )
-                objects_df["pickup_datetime"] = pd.to_datetime(
-                    objects_df["pickup_datetime"], format="%Y-%m-%dT%H:%M:%S%z"
-                )
+                objects_df["pickup_datetime"] = objects_df["pickup_datetime"]
                 return Ok(objects_df)
             except ValueError as e:
                 return Error(
@@ -98,13 +103,19 @@ def combine_to_orders_table(
     match (people_df_res, objects_df_res):
         case (Result(tag="ok", ok=people_df), Result(tag="ok", ok=objects_df)):
             try:
-                combined_df = objects_df.merge(
-                    people_df,
-                    how="left",
-                    left_on="people_id",
-                    right_on="id",
-                    suffixes=(None, "_DROP"),
-                ).filter(regex="^(?!.*DROP)")
+                # https://stackoverflow.com/a/37654295
+                combined_df = (
+                    objects_df.reset_index()
+                    .merge(
+                        people_df,
+                        how="left",
+                        left_on="people_id",
+                        right_on="id",
+                        suffixes=(None, "_DROP"),
+                    )
+                    .filter(regex="^(?!.*DROP)")
+                    .set_index("id")
+                )
                 combined_df.set_axis(
                     ["object", "people_id", "pickup_datetime", "name"], axis=1
                 )
@@ -123,3 +134,54 @@ def combine_to_orders_table(
             return objects_df_res  # error
         case (_, _):
             return people_df_res  # error
+
+
+def insert_conflict_to_path(path: str):
+    """
+    Modifies the given file path by inserting 'conflict' before the file extension.
+
+    Args:
+        path (str): The original file path.
+
+    Returns:
+        str: The modified file path with 'conflict' inserted.
+
+    Example:
+        >>> insert_conflict_to_path("abc/xxx.csv")
+        'abc/xxx.conflict.csv'
+    """
+    # Split the path into the base and extension
+    base, ext = os.path.splitext(path)
+
+    # Insert 'conflict' before the extension
+    return f"{base}.conflict{ext}"
+
+
+def export_and_save_back_origin_path(
+    df: pd.DataFrame, file_path: str, ori_touch_time: datetime
+) -> None:
+    """
+    save df back to
+    """
+    assert isinstance(file_path, str), "file_path is type {}".format(type(file_path))
+    assert isinstance(ori_touch_time, datetime)
+
+    q = Path(file_path)
+
+    # Create parent directories if they don't exist
+    q.parent.mkdir(parents=True, exist_ok=True)
+
+    if not q.exists():
+        df.to_csv(str(q), index=True)
+
+    # exists
+    if not q.is_file():
+        target_path = insert_conflict_to_path(str(q))
+        print(target_path)
+        df.to_csv(target_path, index=True)
+
+    if ori_touch_time != datetime.fromtimestamp(os.path.getmtime(str(q))):
+        # file modified
+        df.to_csv(insert_conflict_to_path(str(q)), index=True)
+
+    df.to_csv(str(q), index=True)
