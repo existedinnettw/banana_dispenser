@@ -5,7 +5,7 @@ from PySide6.QtCore import QObject, Signal, Slot, Property, QUrl
 from PySide6.QtQml import QmlElement, QmlSingleton
 
 from . import data_process as dp
-from expression import Some
+from expression import Some, Result, Ok, Error
 from . import qt_pd_model
 import pandas as pd
 import numpy as np
@@ -64,24 +64,24 @@ class OrderMngr(QObject):
         if url == self._people_list_path:
             return
 
-        people_df_op = Some(url.toString()).pipe(
+        people_df_rst = Some(url.toString()).pipe(
             dp.open_list_file, dp.people_df_validator
         )
         self._people_list_path = url
 
-        if people_df_op.is_none():
+        if people_df_rst.is_error():
             self.ordersTableModel = qt_pd_model.TableModel(self._default_orders_table)
             return
-        self._people_df = people_df_op.value
+        self._people_df = people_df_rst.ok
         print("people df update")
 
-        orders_df_op = dp.combine_to_orders_table(people_df_op, Some(self._objects_df))
+        orders_df_rst = dp.combine_to_orders_table(people_df_rst, Ok(self._objects_df))
 
-        if orders_df_op.is_none():
+        if orders_df_rst.is_error():
             self.ordersTableModel = qt_pd_model.TableModel(self._default_orders_table)
             return
 
-        self.ordersTableModel = qt_pd_model.TableModel(orders_df_op.value)
+        self.ordersTableModel = qt_pd_model.TableModel(orders_df_rst.ok)
 
         print("ordersTableModel update with store people list path update")
 
@@ -96,22 +96,22 @@ class OrderMngr(QObject):
         self._objects_list_path = url
 
         # TODO better validator
-        objects_df_op = Some(url.toString()).pipe(
+        objects_df_rst = Some(url.toString()).pipe(
             dp.open_list_file, dp.objects_df_validator
         )
-        if objects_df_op.is_none():
+        if objects_df_rst.is_error():
             self.ordersTableModel = qt_pd_model.TableModel(self._default_orders_table)
             return
-        self._objects_df = objects_df_op.value
+        self._objects_df = objects_df_rst.ok
         print("object df update")
 
-        orders_df_op = dp.combine_to_orders_table(Some(self._people_df), objects_df_op)
+        orders_df_rst = dp.combine_to_orders_table(Ok(self._people_df), objects_df_rst)
 
-        if orders_df_op.is_none():
+        if orders_df_rst.is_error():
             self.ordersTableModel = qt_pd_model.TableModel(self._default_orders_table)
             return
 
-        self.ordersTableModel = qt_pd_model.TableModel(orders_df_op.value)
+        self.ordersTableModel = qt_pd_model.TableModel(orders_df_rst.ok)
         # print(self.ordersTableModel.df_data)
 
         print("ordersTableModel update with store object list path update")

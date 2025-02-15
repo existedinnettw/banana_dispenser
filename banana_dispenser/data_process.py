@@ -1,154 +1,125 @@
 import pandas as pd
-from expression import Some, Nothing, Option, pipe, Ok
+from expression import Ok, Error, Result, pipe, Option
 import pathlib
-import traceback
 
 
-def open_list_file(file_path: Option[str]) -> Option[pd.DataFrame]:
-    def check_id_as_index(df_op: Option[pd.DataFrame]) -> Option[pd.DataFrame]:
-        match df_op:
-            case Option(tag="some"):
-                df = df_op.value
+def open_list_file(file_path_op: Option[str]) -> Result[pd.DataFrame, str]:
+
+    def check_id_as_index(
+        df_res: Result[pd.DataFrame, str]
+    ) -> Result[pd.DataFrame, str]:
+        match df_res:
+            case Result(tag="ok", ok=df):
                 if "id" in df.columns:
                     df = df.set_index("id")
                 else:
                     df.index.name = "id"
-                # print(df)
-                return Some(df)
+                return Ok(df)
             case _:
-                return Nothing
+                return df_res
 
-    def read_csv(io: Option[str]) -> Option[pd.DataFrame]:
-        try:
-            return Some(
-                pd.read_csv(
-                    io.value,
-                    skipinitialspace=True,
-                    # parse_dates=["pickup_datetime"]
-                )
-            )
-        except Exception:
-            # traceback.print_exc()
-            return Nothing
+    def rst_read_csv(io: Result[str, str]) -> Result[pd.DataFrame, str]:
+        match io:
+            case Result(tag="ok", ok=value):
+                try:
+                    return Ok(pd.read_csv(value, skipinitialspace=True))
+                except Exception as e:
+                    return Error(f"Error reading CSV: {str(e)}")
+            case _:
+                return io
 
-    def read_excel(io: Option[str]) -> Option[pd.DataFrame]:
-        try:
-            return Some(pd.read_excel(io.value))
-        except Exception:
-            # traceback.print_exc()
-            return Nothing
+    def rst_read_excel(io: Result[str, str]) -> Result[pd.DataFrame, str]:
+        match io:
+            case Result(tag="ok", ok=value):
+                try:
+                    return Ok(pd.read_excel(value))
+                except Exception as e:
+                    return Error(f"Error reading Excel: {str(e)}")
+            case _:
+                return io
 
-    extension = pathlib.Path(file_path.value).suffix  #'.csv'
+    extension = pathlib.Path(file_path_op.value).suffix  # e.g. `.csv`
 
     match extension:
         case ".csv":
-            return file_path.pipe(read_csv, check_id_as_index)
+            return Ok(file_path_op.value).pipe(rst_read_csv).pipe(check_id_as_index)
         case ".xls" | ".xlsx":
-            return file_path.pipe(read_excel, check_id_as_index)
+            return Ok(file_path_op.value).pipe(rst_read_excel).pipe(check_id_as_index)
         case _:
-            # unsupport format
-            return Nothing
+            return Error("Unsupported file format {}".format(extension))
 
 
-def people_df_validator(people_df_op: Option[pd.DataFrame]) -> Option[pd.DataFrame]:
-    # pandas not well combine with pydantic yet
-
-    # check if column exist
-    match people_df_op:
-        case Option(tag="some"):
-            people_df = people_df_op.value
-
+def people_df_validator(
+    people_df_res: Result[pd.DataFrame, str]
+) -> Result[pd.DataFrame, str]:
+    match people_df_res:
+        case Result(tag="ok", ok=people_df):
             required_columns = ["name"]
             if not all(column in people_df.columns for column in required_columns):
-                return Nothing
-            # print(people_df)
-
-            # check assign datatype
+                return Error("Missing required columns in people DataFrame")
             try:
-                people_df = people_df.astype(
-                    {
-                        "name": str,
-                    }
+                people_df = people_df.astype({"name": str})
+                return Ok(people_df)
+            except ValueError as e:
+                return Error(
+                    f"Error converting data types in people DataFrame: {str(e)}"
                 )
-                # print(people_df)
-                return Some(people_df)
-            except ValueError:
-                # traceback.print_exc()
-                return Nothing
         case _:
-            return Nothing
+            return people_df_res
 
 
-def objects_df_validator(objects_df_op: Option[pd.DataFrame]) -> Option[pd.DataFrame]:
-    # pandas not well combine with pydantic yet
-
-    # check if column exist
-    match objects_df_op:
-        case Option(tag="some"):
-            # check if columns exactly ["object", "people_id", "pickup_datatime", "name"]
-            objects_df = objects_df_op.value
-            # print(objects_df)
-
+def objects_df_validator(
+    objects_df_res: Result[pd.DataFrame, str]
+) -> Result[pd.DataFrame, str]:
+    match objects_df_res:
+        case Result(tag="ok", ok=objects_df):
             required_columns = ["object", "people_id", "pickup_datetime"]
             if not all(column in objects_df.columns for column in required_columns):
-                return Nothing
-            # print(objects_df)
-
-            # check assign datatype
+                return Error("Missing required columns in objects DataFrame")
             try:
                 objects_df = objects_df.astype(
-                    {
-                        "object": str,
-                        "people_id": pd.Int64Dtype(),
-                    }
+                    {"object": str, "people_id": pd.Int64Dtype()}
                 )
                 objects_df["pickup_datetime"] = pd.to_datetime(
                     objects_df["pickup_datetime"], format="%Y-%m-%dT%H:%M:%S%z"
                 )
-                # print(objects_df)
-                return Some(objects_df)
-            except ValueError:
-                # traceback.print_exc()
-                return Nothing
+                return Ok(objects_df)
+            except ValueError as e:
+                return Error(
+                    f"Error converting data types in objects DataFrame: {str(e)}"
+                )
         case _:
-            return Nothing
+            return objects_df_res
 
 
 def combine_to_orders_table(
-    people_df: Option[pd.DataFrame], objects_df: Option[pd.DataFrame]
-) -> Option[pd.DataFrame]:
-    try:
-        combined_df = objects_df.value.merge(
-            people_df.value,
-            # how="outer",
-            how="left",
-            left_on="people_id",
-            right_on="id",
-            suffixes=(None, "_DROP"),
-        ).filter(regex="^(?!.*DROP)")
-        # print(combined_df)
-        combined_df.set_axis(["object", "people_id", "pickup_datatime", "name"], axis=1)
+    people_df_res: Result[pd.DataFrame, str], objects_df_res: Result[pd.DataFrame, str]
+) -> Result[pd.DataFrame, str]:
+    match (people_df_res, objects_df_res):
+        case (Result(tag="ok", ok=people_df), Result(tag="ok", ok=objects_df)):
+            try:
+                combined_df = objects_df.merge(
+                    people_df,
+                    how="left",
+                    left_on="people_id",
+                    right_on="id",
+                    suffixes=(None, "_DROP"),
+                ).filter(regex="^(?!.*DROP)")
+                combined_df.set_axis(
+                    ["object", "people_id", "pickup_datetime", "name"], axis=1
+                )
 
-        combined_df = combined_df.astype(
-            {
-                "people_id": pd.Int64Dtype(),
-            }
-        )
-        # if any entry which is not match have no people_df --> they are wrong
-        non_matched_combined_df = combined_df[combined_df["people_id"].isnull()]
-        # print("non matched:\n", non_matched_combined_df, "\n")
-        if not non_matched_combined_df.empty:
-            print("[WARNING] following entry is not matched")
-            print(non_matched_combined_df)
-        # TODO may need to list people not yet order
+                combined_df = combined_df.astype({"people_id": pd.Int64Dtype()})
+                non_matched_combined_df = combined_df[combined_df["people_id"].isnull()]
+                if not non_matched_combined_df.empty:
+                    print("[WARNING] following entry is not matched")
+                    print(non_matched_combined_df)
 
-        matched_combined_df = combined_df[~combined_df["people_id"].isnull()]
-        # print("matched:\n", matched_combined_df, "\n")
-        return Some(matched_combined_df)
-    except Exception:
-        # traceback.print_exc()
-        return Nothing
-
-
-# def check_order( users:pd.Data):
-#     pass
+                matched_combined_df = combined_df[~combined_df["people_id"].isnull()]
+                return Ok(matched_combined_df)
+            except Exception as e:
+                return Error(f"Error combining DataFrames: {str(e)}")
+        case (Result(tag="ok", ok=people_df), _):
+            return objects_df_res  # error
+        case (_, _):
+            return people_df_res  # error
