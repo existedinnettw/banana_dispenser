@@ -1,4 +1,7 @@
 import pytest
+import pandas as pd
+import pytest
+from unittest.mock import patch
 from PySide6.QtCore import QUrl
 import pandas as pd
 from pathlib import Path
@@ -11,10 +14,13 @@ from banana_dispenser import qt_pd_model
 
 
 @pytest.fixture
-def sample_people_data():
-    return pd.DataFrame(
-        {"id": [21, 1, 23], "name": ["Alice", "Bob", "Charlie"]}
-    ).set_index("id")
+def sample_people_data() -> pd.DataFrame:
+    """
+    Fixture that provides a sample DataFrame with people's IDs and names.
+    The 'id' column is set as the index.
+    """
+    data = {"id": [21, 1, 23], "name": ["Alice", "Bob", "Charlie"]}
+    return pd.DataFrame(data).set_index("id")
 
 
 @pytest.fixture
@@ -92,14 +98,29 @@ def test_object_pickup(order_manager, temp_csv_files):
     order_manager.peopleListPath = QUrl.fromLocalFile(people_path)
     order_manager.objectListPath = QUrl.fromLocalFile(objects_path)
 
-    # Test pickup for person with ID 1
-    success = order_manager.object_pick_up(1)
-    assert success
+    with patch.object(order_manager.ordersTableModel, "setData") as mock_setData:
+        # with patch.object(TableModel, "setData") as mock_setData:
 
-    # Verify pickup time was set
-    result_df = order_manager.ordersTableModel.df_data
-    pickup_time = result_df[result_df["people_id"] == 1]["pickup_datetime"].iloc[0]
-    assert not pd.isna(pickup_time)
+        # Test pickup for person with ID 1
+        success = order_manager.object_pick_up(1)
+        assert success
+
+        # Verify pickup time was set
+        result_df = order_manager.ordersTableModel.df_data
+        pickup_time = result_df[result_df["people_id"] == 1]["pickup_datetime"].iloc[0]
+        assert not pd.isna(pickup_time)
+
+        # Verify that setData was called with the correct arguments
+        mock_setData.assert_called()
+        args, kwargs = mock_setData.call_args
+        row = kwargs["index"].row()
+        col = kwargs["index"].column()
+        print("args:", args, kwargs)
+        assert row == 0  # row index
+        assert col == order_manager.ordersTableModel.df_data.columns.get_loc(
+            "pickup_datetime"
+        )
+        assert not pd.isna(kwargs["value"])  # Ensure the pickup time is not NaT
 
 
 def test_invalid_pickup(order_manager, temp_csv_files):

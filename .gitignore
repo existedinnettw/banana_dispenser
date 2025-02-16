@@ -180,3 +180,7 @@ cython_debug/
 
 *.sqlite3
 *.sqlite
+
+*.bin
+*.exe
+*.app

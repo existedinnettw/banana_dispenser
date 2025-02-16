@@ -5,8 +5,8 @@ import json
 from PySide6.QtQuick import QQuickView
 from PySide6.QtCore import QStringListModel
 from PySide6.QtGui import QGuiApplication, QIcon
-from . import util, store  # noqa: F401
-from . import rc_banana_dispenser  # noqa: F401
+from banana_dispenser import util, store  # noqa: F401
+from banana_dispenser import rc_banana_dispenser  # noqa: F401
 
 
 def program():

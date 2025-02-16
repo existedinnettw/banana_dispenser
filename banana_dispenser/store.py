@@ -1,14 +1,15 @@
+import os
+from datetime import datetime
 from PySide6 import QtCore
 from PySide6.QtCore import QObject, Signal, Slot, Property, QUrl
 from PySide6.QtQml import QmlElement, QmlSingleton
-from . import data_process as dp
+from banana_dispenser import data_process as dp
 from expression import Some, Result, Ok, Error
-from . import qt_pd_model
+from banana_dispenser import qt_pd_model
 import pandas as pd
 from datetime import datetime, timezone
-import os
 import atexit
-from .util import get_path_from_file_uri
+from banana_dispenser.util import get_path_from_file_uri
 import numpy as np
 
 # register type to QML
@@ -16,10 +17,19 @@ QML_IMPORT_NAME = "Store"
 QML_IMPORT_MAJOR_VERSION = 1
 
 
-def _Qurl_touch_datetime(url: QUrl):
-    return datetime.fromtimestamp(
-        os.path.getmtime(get_path_from_file_uri(url.toString()))
-    )
+def _Qurl_touch_datetime(url: QUrl) -> datetime:
+    """
+    Returns the last modification datetime of the file specified by the QUrl.
+
+    Args:
+        url (QUrl): A QUrl object representing the file URL.
+
+    Returns:
+        datetime: The last modification time of the file as a datetime object.
+    """
+    file_path = get_path_from_file_uri(url.toString())
+    modification_time = os.path.getmtime(file_path)
+    return datetime.fromtimestamp(modification_time)
 
 
 def _Qurl_to_path_str(url: QUrl):
@@ -93,11 +103,7 @@ class OrderMngr(QObject):
 
         for id, row in selected_rows.iterrows():
             # id == row.name
-
-            # find raw row index
-            row_idx = np.where(orders_df.index == id)[0][0]  # is unique
             # # print("[DEBUG]\n", row_idx, "\n", id, "\n", row)
-
             if not pd.isna(row["pickup_datetime"]):
                 print("[DEBUG]: person already picked up.")
                 continue
@@ -114,6 +120,7 @@ class OrderMngr(QObject):
             ] = now_time_pd_ts
 
             # notify update qml
+            row_idx = np.where(orders_df.index == id)[0][0]  # is unique
             column_idx = orders_df.columns.get_loc("pickup_datetime")
             # # print("[DEBUG] pick_up: row: ", row_idx, ", col: ", column_idx)
             self._orders_table_model.setData(

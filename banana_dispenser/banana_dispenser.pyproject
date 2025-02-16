@@ -1,7 +1,15 @@
 {
     "files": [
+        "__init__.py",
         "banana_dispenser.py",
-        "banana_dispenser.qrc"
+        "data_process.py",
+        "store.py",
+        "util.py",
+        "rc_banana_dispenser.py",
+        "qt_pd_model.py",
+        "banana_dispenser.qrc",
+        "assets/banana.png",
+        "pysidedeploy.spec",
         "App/Main.qml",
         "App/Pages/ScanPage.qml",
         "App/Pages/SettingsPage.qml",
