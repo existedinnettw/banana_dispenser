@@ -177,7 +177,7 @@ cython_debug/
 *.user
 *.qtds
 
-
+.qodo/
 *.sqlite3
 *.sqlite
 

@@ -2,6 +2,7 @@
     "recommendations": [
         "delgan.qml-format",
         "theqtcompany.qt-qml",
-        "ms-python.black-formatter"
+        "ms-python.black-formatter",
+        "ms-python.flake8"
     ]
 }

@@ -1,5 +1,5 @@
 import pandas as pd
-from expression import Ok, Error, Result, pipe, Option
+from expression import Ok, Error, Result, pipe, Option, Some
 import pathlib
 from datetime import datetime
 import os
@@ -157,11 +157,31 @@ def insert_conflict_to_path(path: str):
     return f"{base}.conflict{ext}"
 
 
+def export_df_list_file(
+    df_op: Option[pd.DataFrame], file_path_op: Option[Path]
+) -> Result[None, str]:
+    """ """
+    extension = file_path_op.value.suffix  # e.g. `.csv`
+
+    if df_op.is_none():
+        return Error("No dataframe passed in.")
+
+    match extension:
+        case ".csv":
+            df_op.value.to_csv(str(file_path_op.value), index=True)
+            return Ok(None)
+        case ".xls" | ".xlsx":
+            df_op.value.to_excel(str(file_path_op.value), index=True)
+            return Ok(None)
+        case _:
+            return Error("Unsupported file format {}".format(extension))
+
+
 def export_and_save_back_origin_path(
     df: pd.DataFrame, file_path: str, ori_touch_time: datetime
 ) -> None:
     """
-    save df back to
+    Save df back to original path, depend on touch time
     """
     assert isinstance(file_path, str), "file_path is type {}".format(type(file_path))
     assert isinstance(ori_touch_time, datetime)
@@ -171,17 +191,20 @@ def export_and_save_back_origin_path(
     # Create parent directories if they don't exist
     q.parent.mkdir(parents=True, exist_ok=True)
 
+    df_op = Some(df)
+    q_op = Some(q)
+
     if not q.exists():
-        df.to_csv(str(q), index=True)
+        # df.to_csv(str(q), index=True)
+        export_df_list_file(df_op, q_op)
 
     # exists
     if not q.is_file():
         target_path = insert_conflict_to_path(str(q))
-        print(target_path)
-        df.to_csv(target_path, index=True)
+        export_df_list_file(df_op, pipe(target_path, Path, Some))
 
     if ori_touch_time != datetime.fromtimestamp(os.path.getmtime(str(q))):
-        # file modified
-        df.to_csv(insert_conflict_to_path(str(q)), index=True)
+        target_path = insert_conflict_to_path(str(q))
+        export_df_list_file(df_op, pipe(target_path, Path, Some))
 
-    df.to_csv(str(q), index=True)
+    export_df_list_file(df_op, q_op)
